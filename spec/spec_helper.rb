@@ -1,6 +1,7 @@
 # This needs to go before all requires to be able to record full coverage
 require 'coveralls'
-Coveralls.wear!
+Coveralls.wear_merged!
+SimpleCov.merge_timeout 1800
 # Now the application requires.
 require 'hawkular/hawkular_client'
 require 'hawkular/hawkular_client_utils'
