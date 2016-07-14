@@ -1,5 +1,12 @@
 # This needs to go before all requires to be able to record full coverage
+require 'simplecov'
 require 'coveralls'
+
+SimpleCov.formatter = Coveralls::SimpleCov::Formatter
+SimpleCov.start do
+  add_filter '/spec/'
+end
+
 # Now the application requires.
 require 'hawkular/hawkular_client'
 require 'hawkular/hawkular_client_utils'
