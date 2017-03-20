@@ -1,13 +1,30 @@
 #!/usr/bin/env ruby
 
 def check_preconditions
-  exit 1 if ENV['TRAVIS_SECURE_ENV_VARS'] != 'true'
-  exit 1 if !ENV['GH_TOKEN']
-  exit 1 if ENV['CI'] != 'true'
-  exit 1 if ENV['TRAVIS_PULL_REQUEST'] != 'false'
+  if ENV['CI'] != 'true'
+    puts 'The script is not run on Travis'
+    exit 1
+  end
+  if ENV['TRAVIS_PULL_REQUEST'] != 'false'
+    puts 'This script can\'t run for pull requests'
+    exit 1
+  end
   if !ENV['TRAVIS_TAG'] || ENV['TRAVIS_TAG'] !~ /^v\d{1,2}\.\d{1,2}\.\d{1,2}$/
     puts 'Skipping the docs generation because it\'s not a release build.'
     exit 0
+  end
+  # JOB: Ruby: 2.3.0 RUN_ON_LIVE_SERVER=0
+  if !ENV['TRAVIS_JOB_NUMBER'].end_with?('.4')
+    puts 'The document generation can be run only on the leader node.'
+    exit 1
+  end
+  if ENV['TRAVIS_SECURE_ENV_VARS'] != 'true'
+    puts 'There are no encrypted variables, add the secret to the .travis.yml'
+    exit 1
+  end
+  if !ENV['GH_TOKEN']
+    puts 'The GH_TOKEN variable is not set'
+    exit 1
   end
 end
 check_preconditions
@@ -37,7 +54,7 @@ end
 def add_to_scm
   `git add -A`
   `git commit -m "Docs for version #{VERSION}."`
-  `git remote add ad-hoc-origin https://hawkular-website-bot:#{GH_TOKEN}@github.com/hawkular/hawkular-client-ruby.git`
+  `git remote add ad-hoc-origin https://hawkular-website-bot:#{GH_TOKEN}@github.com/Jiri-Kremser/hawkular-client-ruby.git`
   `git push ad-hoc-origin gh-pages`
 end
 
