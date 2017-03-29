@@ -8,9 +8,6 @@ module Hawkular::Inventory::RSpec
   VERSION = ENV['INVENTORY_VERSION'] || DEFAULT_VERSION
 
   SKIP_SECURE_CONTEXT = ENV['SKIP_SECURE_CONTEXT'] || '1'
-
-  URL_RESOURCE = 'http://bsd.de'
-
   NON_SECURE_CONTEXT = :NonSecure
   SECURE_CONTEXT = :Secure
 
@@ -96,26 +93,6 @@ module Hawkular::Inventory::RSpec
               @client.list_resources_for_feed(@state[:feed_uuid]).length < 2
             end
           end if ENV['RUN_ON_LIVE_SERVER'] == '1'
-
-          # create 1 URL resource and its metrics
-          record("Inventory/#{security_context}/inventory_#{x}_#{y}", @state.clone, 'Helpers/create_url') do
-            headers = {}
-            headers[:'Hawkular-Tenant'] = client_options[:tenant]
-            rest_client = RestClient::Resource.new(helper_entrypoint(security_context, 'urls'),
-                                                   user: credentials[:username],
-                                                   password: credentials[:password],
-                                                   headers: headers)
-            url_json = {
-              url: URL_RESOURCE
-            }.to_json
-
-            begin
-              rest_client.post(url_json, content_type: 'application/json')
-            rescue
-              puts 'failed to create the url, it might be already there'
-              # no big deal, the url is probably already there
-            end
-          end
 
           sleep 2 if ENV['VCR_UPDATE'] == '1' || ENV['VCR_OFF'] == '1'
         end
@@ -215,19 +192,6 @@ module Hawkular::Inventory::RSpec
           resources = @client.list_resources_for_type(type_path.to_s, fetch_properties: true)
 
           expect(resources.size).to be > 0
-        end
-
-        it 'Should list URLs' do
-          type_path = Hawkular::Inventory::CanonicalPath.new(
-            feed_id: feed_id,
-            resource_type_id: hawk_escape_id('URL'))
-          resources = @client.list_resources_for_type(type_path.to_s)
-          expect(resources.size).to be > 0
-          resource = resources[0]
-          expect(resource.instance_of? Hawkular::Inventory::Resource).to be_truthy
-          # depends how pinger is fast
-          expect(2..6).to cover(resource.properties.size)
-          expect(resource.properties['url']).to eq(URL_RESOURCE)
         end
 
         it 'Should list metrics for WildFlys' do
